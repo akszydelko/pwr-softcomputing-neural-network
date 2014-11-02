@@ -1,4 +1,5 @@
 import os
+
 import numpy
 
 
@@ -59,8 +60,8 @@ def read_coded_massage(file_name):
             else:
                 out += [[int(x) for x in line.strip().split(' ')]]
                 # line_numbers = line[1:].strip().split(' ')
-                #out += [[[int(line_numbers.pop(0)) for x in xrange(int(line[0]))] for raw in xrange(int(line[0]))]]
-                #print out
+                # out += [[[int(line_numbers.pop(0)) for x in xrange(int(line[0]))] for raw in xrange(int(line[0]))]]
+                # print out
 
     return out
 
@@ -99,11 +100,25 @@ def form_binary_matrix(matrix):
 
     for i in xrange(len(matrix)):
         for q in xrange(len(matrix[i])):
-            out_matrix[i][q*BIN_EDGE_ARRAY_SIZE: q*BIN_EDGE_ARRAY_SIZE + BIN_EDGE_ARRAY_SIZE] = \
+            out_matrix[i][q * BIN_EDGE_ARRAY_SIZE: q * BIN_EDGE_ARRAY_SIZE + BIN_EDGE_ARRAY_SIZE] = \
                 convert_int_to_bin_array(matrix[i][q])
 
     return out_matrix
 
 
+def make_matrix_flat(matrix):
+    out = numpy.zeros(BINARY_MATRIX_SIZE * BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE, numpy.int)
+    for i in xrange(len(matrix)):
+        out[i * BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE:
+            i * BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE + BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE] = \
+            matrix[i]
+
+    return out
+
+
 def get_bin_coded_alphabet(alphabet):
     return [form_binary_matrix(codded_array_to_matrix(letter_array)) for letter_array in alphabet]
+
+
+def get_bin_coded_alphabet_flat(alphabet):
+    return [make_matrix_flat(form_binary_matrix(codded_array_to_matrix(letter_array))) for letter_array in alphabet]

@@ -1,6 +1,8 @@
 import argparse
 import os
+from network import LetterRecognitionNetwork
 import utils
+import numpy as np
 
 
 TESTS = {
@@ -12,8 +14,8 @@ TESTS = {
     't6': 'text_6.txt', 't6_original': 'text_6_chars.txt'
 }
 
-ALPHABET = 'data' + os.pathsep + 'alfabet.txt'
-ALPHABET_CODED = 'data' + os.pathsep + 'alfabet_codificat.txt'
+ALPHABET = 'alfabet.txt'
+ALPHABET_CODED = 'alfabet_codificat.txt'
 
 
 if __name__ == '__main__':
@@ -36,11 +38,37 @@ if __name__ == '__main__':
     elif hasattr(args, 'path') and args.path:
         file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), args.path)
 
+    display_alphabet = utils.read_alphabet(ALPHABET)
+
     # TODO: 1. Train the network
+    # Create network
+    alphabet_bin = utils.get_bin_coded_alphabet_flat(utils.read_coded_alphabet(ALPHABET_CODED))
+    network = LetterRecognitionNetwork(alphabet_bin)
     # TODO: 2. Use network to recognise message
-    massage = 'Here goes the recognised message (Recognizing network not implemented yet)'
-    print '\nEncoded massage:'
-    print massage
+    al = np.asarray(alphabet_bin, np.int)
+    al[al == 0] = -1
+    result = network.what_is_array(al)
+    # print("Test on train samples:")
+    # for i in xrange(len(al)):
+    #     print display_alphabet[i], (result[i] == al[i]).all()
+
+    # --- Coded text check ----------------------------------------------------------------
+    arr = utils.read_coded_massage(file_path)
+    arr_bin = []
+    for letter in arr:
+        if isinstance(letter, list):
+            arr_bin += [utils.make_matrix_flat(utils.form_binary_matrix(utils.codded_array_to_matrix(letter)))]
+
+    arr_bin = np.asarray(arr_bin, np.int)
+
+    arr_bin[arr_bin == 0] = -1
+    result = network.what_is_array(arr_bin)
+    print 'Testing simple text:'
+    for i in xrange(len(result)):
+        for q in xrange(len(al)):
+            if (result[i] == al[q]).all():
+                print display_alphabet[q],
+    # --- End coded text check ----------------------------------------------------------------
 
     if hasattr(args, 'test') and args.test and hasattr(args, 'original') and args.original:
         print '\n Original massage:'
