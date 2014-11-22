@@ -1,8 +1,8 @@
 import argparse
 import os
-from network import LetterRecognitionNetwork
+
+from network import LetterRecognitionNetworkBase
 import utils
-import numpy as np
 
 
 TESTS = {
@@ -17,11 +17,10 @@ TESTS = {
 ALPHABET = 'alfabet.txt'
 ALPHABET_CODED = 'alfabet_codificat.txt'
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Letter recognition process.')
-    #parser.add_argument("-t", "--test", help="Test number from 1-6. Eg. -t t2.")
-    #parser.add_argument("-o", "--original", help="print original massage. ONLY when use -t.", action="store_true")
+    parser.add_argument("-t", "--test", help="Test number from 1-6. Eg. -t t2.")
+    parser.add_argument("-o", "--original", help="print original massage. ONLY when use -t.", action="store_true")
     parser.add_argument("-p", "--path", help="Path to file with coded massage.")
     parser.add_argument("-a", "--alphabet", help="Alphabet file, have to be used with -ac.")
     parser.add_argument("-ac", "--alphabetCoded", help="Coded Alphabet file, have to be used with -a.")
@@ -38,39 +37,33 @@ if __name__ == '__main__':
     elif hasattr(args, 'path') and args.path:
         file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), args.path)
 
+    # Load alphabet
+    alphabet_bin = utils.get_bin_coded_data(utils.read_coded_alphabet(ALPHABET_CODED))
     display_alphabet = utils.read_alphabet(ALPHABET)
 
-    # TODO: 1. Train the network
     # Create network
-    alphabet_bin = utils.get_bin_coded_alphabet_flat(utils.read_coded_alphabet(ALPHABET_CODED))
-    network = LetterRecognitionNetwork(alphabet_bin)
-    # TODO: 2. Use network to recognise message
-    al = np.asarray(alphabet_bin, np.int)
-    al[al == 0] = -1
-    result = network.what_is_array(al)
-    # print("Test on train samples:")
-    # for i in xrange(len(al)):
-    #     print display_alphabet[i], (result[i] == al[i]).all()
+    network = LetterRecognitionNetworkBase(
+        utils.BINARY_MATRIX_SIZE * utils.BINARY_MATRIX_SIZE * utils.BIN_EDGE_ARRAY_SIZE,
+        len(display_alphabet),
+        len(display_alphabet)
+    )
 
-    # --- Coded text check ----------------------------------------------------------------
-    arr = utils.read_coded_massage(file_path)
-    arr_bin = []
-    for letter in arr:
-        if isinstance(letter, list):
-            arr_bin += [utils.make_matrix_flat(utils.form_binary_matrix(utils.codded_array_to_matrix(letter)))]
+    # Add learning data and train the network
+    network.add_learning_data(alphabet_bin, display_alphabet).train(200)
 
-    arr_bin = np.asarray(arr_bin, np.int)
-
-    arr_bin[arr_bin == 0] = -1
-    result = network.what_is_array(arr_bin)
-    print 'Testing simple text:'
-    for i in xrange(len(result)):
-        for q in xrange(len(al)):
-            if (result[i] == al[q]).all():
-                print display_alphabet[q],
-    # --- End coded text check ----------------------------------------------------------------
+    # Use network to recognise message
+    coded_message = utils.get_bin_coded_data(utils.read_coded_massage(file_path))
+    print '----------------------------------------\n\n'
+    print '### Recognized message:'
+    message = network.read_data_set(coded_message).lower()
+    cap_step_1 = '. '.join([x.capitalize() for x in message.split('. ')])
+    cap_step_2 = '\n'.join([x[0].capitalize() + x[1:] if len(x) > 1 else x for x in cap_step_1.split('\n')])
+    print cap_step_2
 
     if hasattr(args, 'test') and args.test and hasattr(args, 'original') and args.original:
-        print '\n Original massage:'
-        print utils.get_test_original_massage(TESTS[args.test + '_original'].strip().lower())
-
+        print '### Original message:'
+        real_message = utils.get_test_original_massage(TESTS[args.test + '_original'].strip().lower())
+        print real_message
+        good_recognition_count = sum(message[i] == real_message[i].lower() for i in xrange((len(real_message))))
+        print '\n\nGood recognition:\n%d%%\t%d/%d characters' % (
+            100 * good_recognition_count / len(real_message), good_recognition_count, len(real_message))

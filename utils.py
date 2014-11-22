@@ -1,10 +1,10 @@
 import os
 
-import numpy
+import numpy as np
 
 
 BINARY_MATRIX_SIZE = 10
-BIN_EDGE_ARRAY_SIZE = 3
+BIN_EDGE_ARRAY_SIZE = 4
 
 
 def get_file_path_data(file_name):
@@ -94,9 +94,9 @@ def convert_int_to_bin_array(number, size=BIN_EDGE_ARRAY_SIZE):
 
 
 def form_binary_matrix(matrix):
-    matrix = numpy.asarray(matrix, numpy.int)
-    out_matrix = numpy.zeros(
-        (BINARY_MATRIX_SIZE, BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE), numpy.int)
+    matrix = np.asarray(matrix, np.int)
+    out_matrix = np.zeros(
+        (BINARY_MATRIX_SIZE, BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE), np.int)
 
     for i in xrange(len(matrix)):
         for q in xrange(len(matrix[i])):
@@ -107,18 +107,27 @@ def form_binary_matrix(matrix):
 
 
 def make_matrix_flat(matrix):
-    out = numpy.zeros(BINARY_MATRIX_SIZE * BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE, numpy.int)
+    out = np.zeros(BINARY_MATRIX_SIZE * BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE, np.int)
     for i in xrange(len(matrix)):
         out[i * BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE:
-            i * BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE + BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE] = \
+        i * BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE + BINARY_MATRIX_SIZE * BIN_EDGE_ARRAY_SIZE] = \
             matrix[i]
 
     return out
 
 
-def get_bin_coded_alphabet(alphabet):
-    return [form_binary_matrix(codded_array_to_matrix(letter_array)) for letter_array in alphabet]
-
-
-def get_bin_coded_alphabet_flat(alphabet):
-    return [make_matrix_flat(form_binary_matrix(codded_array_to_matrix(letter_array))) for letter_array in alphabet]
+def get_bin_coded_data(alphabet):
+    mapping = {
+        51: ' ',
+        52: ',',
+        53: '.'
+    }
+    out = []
+    for letter_array in alphabet:
+        if isinstance(letter_array, list):
+            out.append(form_binary_matrix(codded_array_to_matrix(letter_array)))
+        elif isinstance(letter_array, int):
+            out.append(mapping[letter_array])
+        else:
+            out.append(str(letter_array))
+    return out
