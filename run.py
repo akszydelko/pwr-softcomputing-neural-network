@@ -1,5 +1,6 @@
 import argparse
 import os
+import pickle
 
 from network import LetterRecognitionNetworkBase
 import utils
@@ -24,6 +25,8 @@ if __name__ == '__main__':
     parser.add_argument("-p", "--path", help="Path to file with coded massage.")
     parser.add_argument("-a", "--alphabet", help="Alphabet file, have to be used with -ac.")
     parser.add_argument("-ac", "--alphabetCoded", help="Coded Alphabet file, have to be used with -a.")
+    parser.add_argument("-un", "--useNetwork", help="Path to pickle file with network object to use.")
+    parser.add_argument("-sn", "--saveNetwork", help="Save used network to given file.")
     args = parser.parse_args()
 
     if hasattr(args, 'alphabet') and args.alphabet and hasattr(args, 'alphabetCoded') and args.aplhabetCoded:
@@ -37,19 +40,27 @@ if __name__ == '__main__':
     elif hasattr(args, 'path') and args.path:
         file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), args.path)
 
-    # Load alphabet
-    alphabet_bin = utils.get_bin_coded_data(utils.read_coded_alphabet(ALPHABET_CODED))
-    display_alphabet = utils.read_alphabet(ALPHABET)
+    if hasattr(args, 'useNetwork') and args.useNetwork:
+        with open(args.useNetwork, 'r') as f:
+            network = pickle.load(f)
+    else:
+        # Load alphabet
+        alphabet_bin = utils.get_bin_coded_data(utils.read_coded_alphabet(ALPHABET_CODED))
+        display_alphabet = utils.read_alphabet(ALPHABET)
 
-    # Create network
-    network = LetterRecognitionNetworkBase(
-        utils.BINARY_MATRIX_SIZE * utils.BINARY_MATRIX_SIZE * utils.BIN_EDGE_ARRAY_SIZE,
-        len(display_alphabet),
-        len(display_alphabet)
-    )
+        # Create network
+        network = LetterRecognitionNetworkBase(
+            utils.BINARY_MATRIX_SIZE * utils.BINARY_MATRIX_SIZE * utils.BIN_EDGE_ARRAY_SIZE,
+            len(display_alphabet),
+            len(display_alphabet)
+        )
 
-    # Add learning data and train the network
-    network.add_learning_data(alphabet_bin, display_alphabet).train(200)
+        # Add learning data and train the network
+        network.add_learning_data(alphabet_bin, display_alphabet).train(200)
+
+        if hasattr(args, 'saveNetwork') and args.saveNetwork:
+            with open(args.saveNetwork, 'wb') as f:
+                pickle.dump(network, f)
 
     # Use network to recognise message
     coded_message = utils.get_bin_coded_data(utils.read_coded_massage(file_path))
