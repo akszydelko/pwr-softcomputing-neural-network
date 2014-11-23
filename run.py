@@ -66,14 +66,14 @@ if __name__ == '__main__':
     coded_message = utils.get_bin_coded_data(utils.read_coded_massage(file_path))
     print '----------------------------------------\n\n'
     print '### Recognized message:'
-    message = network.read_data_set(coded_message).lower()
+    message = network.read_data_set(coded_message).strip().lower()
     cap_step_1 = '. '.join([x.capitalize() for x in message.split('. ')])
     cap_step_2 = '\n'.join([x[0].capitalize() + x[1:] if len(x) > 1 else x for x in cap_step_1.split('\n')])
     print cap_step_2
 
     if hasattr(args, 'test') and args.test and hasattr(args, 'original') and args.original:
         print '### Original message:'
-        real_message = utils.get_test_original_massage(TESTS[args.test + '_original'].strip().lower())
+        real_message = utils.get_test_original_massage(TESTS[args.test + '_original'].strip().lower()).strip()
         print real_message
         good_recognition_count = sum(message[i] == real_message[i].lower() for i in xrange((len(real_message))))
         print '\n\nGood recognition:\n%d%%\t%d/%d characters' % (
