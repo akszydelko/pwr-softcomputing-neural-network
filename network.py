@@ -75,9 +75,10 @@ class LetterRecognitionNetworkBase(object):
 
         # training iterations
         for i in xrange(iterations):
-            trainer.train()
+            total_error = trainer.train()
             if (i+1) % 20 == 0 or i+1 == iterations:
-                print "%2d%%\tEpoches: %4d/%d" % (100*trainer.totalepochs/iterations, trainer.totalepochs, iterations)
+                print "%2d%%\tEpoches: %4d/%d\tTotal error:%f" % \
+                      (100*trainer.totalepochs/iterations, trainer.totalepochs, iterations, total_error)
 
     def read_data_set(self, data):
         """Run the module's forward pass on the given dataset unconditionally
