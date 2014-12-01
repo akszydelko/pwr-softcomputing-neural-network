@@ -55,12 +55,15 @@ if __name__ == '__main__':
         # Create network
         network = LetterRecognitionNetworkBase(
             utils.BINARY_MATRIX_SIZE * utils.BINARY_MATRIX_SIZE * utils.BIN_EDGE_ARRAY_SIZE,
-            len(display_alphabet),
+            200,
             len(display_alphabet)
         )
 
         # Add learning data and train the network
-        network.add_learning_data(alphabet_bin, display_alphabet).train(1200)
+        learning_iterations = 120
+        network\
+            .add_learning_data(alphabet_bin, display_alphabet)\
+            .train(learning_iterations, learningrate=0.05, momentum=0.2, weightdecay=0.01, lrdecay=1.0)
 
         if hasattr(args, 'saveNetwork') and args.saveNetwork:
             with open(args.saveNetwork, 'wb') as f:
@@ -86,10 +89,36 @@ if __name__ == '__main__':
             100 * good_recognition_count / len(real_message), good_recognition_count, len(real_message))
 
         if hasattr(args, 'analyze') and args.analyze:
-            set_printoptions(linewidth=100)
-            real_message = real_message.replace('\r', '')
-            message = message.replace('\r', '')
+            options_mapping = {
+                'learningrate': 'Learning rate',
+                'momentum': 'Momentum',
+                'weightdecay': 'Weight decay rate',
+                'lrdecay': 'Learning decay rate'
+            }
+
             with open(os.path.join(os.path.dirname(__file__), 'analytics', TESTS[args.test]), 'wb') as f:
+                print >> f, 'Network:'
+                print >> f, 'Input layer:', network.layers[0]
+                print >> f, 'Hidden layer:', network.layers[1]
+                print >> f, 'Output layer:', network.layers[2]
+
+                print >> f, '\nLearning options:'
+                for key in network.learning_options:
+                    print >> f, '%s: %s' % (options_mapping.get(key, key), network.learning_options[key])
+
+                print >> f, '\nEpoches:', network.trainer.totalepochs
+                print >> f, 'Total Error:', network.total_error
+                print >> f, 'Good recognition: %d%% - %d/%d characters' % (
+                    100 * good_recognition_count / len(real_message), good_recognition_count, len(real_message))
+                print >> f, '\n### Recognized message:'
+                print >> f, cap_step_2
+                print >> f, '\n### Original message:'
+                print >> f, real_message
+
+                set_printoptions(linewidth=100)
+                real_message = real_message.replace('\r', '')
+                message = message.replace('\r', '')
+
                 for i, sample in enumerate(coded_message_bin):
                     if isinstance(sample, ndarray):
                         print >> f, '\n\n----------------------------------------------------------'

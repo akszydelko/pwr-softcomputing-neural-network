@@ -12,19 +12,24 @@ class DataError(Exception):
 
 
 class LetterRecognitionNetworkBase(object):
+    layers = []
     training_data = None
     test_data = None
+    total_error = None
+    trainer = None
+    learning_options = {}
 
     def __init__(self, in_layer_size, hidden_layer_size, out_layer_size):
         """Creates network with layers and all connections."""
         self.input_size = in_layer_size
-        self.network = self._create_network(in_layer_size, hidden_layer_size, out_layer_size)
+        self.layers = (self.input_size, hidden_layer_size, out_layer_size)
+        self.network = self._create_network(*self.layers)
 
     def _create_network(self, in_layer_size, hidden_layer_size, out_layer_size):
         """Creates and return a network based on self._network_class class."""
         return buildNetwork(in_layer_size, hidden_layer_size, out_layer_size,
                             hiddenclass=SigmoidLayer, outclass=LinearLayer, recurrent=True,
-                            bias=True, outputbias=True)
+                            bias=False, outputbias=True)
 
     def add_learning_data(self, data, data_labels):
         """Add and classify data for the training procedure and for recognitions queries."""
@@ -71,14 +76,15 @@ class LetterRecognitionNetworkBase(object):
 
     def train(self, iterations, trainer_class=BackpropTrainer, **kwargs):
         """Run the learning procedure."""
-        trainer = trainer_class(self.network, dataset=self.training_data, momentum=0.1, weightdecay=0.01, **kwargs)
+        self.learning_options.update(kwargs or {})
+        self.trainer = trainer_class(self.network, dataset=self.training_data, **self.learning_options)
 
         # training iterations
         for i in xrange(iterations):
-            total_error = trainer.train()
+            self.total_error = self.trainer.train()
             if (i+1) % 20 == 0 or i+1 == iterations:
                 print "%2d%%\tEpoches: %4d/%d\tTotal error:%f" % \
-                      (100*trainer.totalepochs/iterations, trainer.totalepochs, iterations, total_error)
+                      (100*self.trainer.totalepochs/iterations, self.trainer.totalepochs, iterations, self.total_error)
 
     def read_data_set(self, data):
         """Run the module's forward pass on the given dataset unconditionally
