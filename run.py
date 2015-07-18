@@ -4,7 +4,7 @@ import pickle
 
 from numpy import ndarray, asarray, set_printoptions
 
-from network import LetterRecognitionNetworkBase
+from network import LetterRecognitionNetworkBase, LetterRecognitionNetwork
 import utils
 
 
@@ -53,17 +53,17 @@ if __name__ == '__main__':
             network = pickle.load(f)
     else:
         # Create network
-        network = LetterRecognitionNetworkBase(
+        network = LetterRecognitionNetwork(
             utils.BINARY_MATRIX_SIZE * utils.BINARY_MATRIX_SIZE * utils.BIN_EDGE_ARRAY_SIZE,
-            200,
+            180,
             len(display_alphabet)
         )
 
         # Add learning data and train the network
-        learning_iterations = 120
+        learning_iterations = 180
         network\
             .add_learning_data(alphabet_bin, display_alphabet)\
-            .train(learning_iterations, learningrate=0.05, momentum=0.2, weightdecay=0.01, lrdecay=1.0)
+            .train(learning_iterations, learningrate=0.05, momentum=0.1, weightdecay=0.01, lrdecay=1.0)
 
         if hasattr(args, 'saveNetwork') and args.saveNetwork:
             with open(args.saveNetwork, 'wb') as f:
